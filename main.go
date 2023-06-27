@@ -15,7 +15,7 @@ func main() {
 	e := echo.New()
 
 	e = routes.Routes(e)
-	e.Start(":8000")
+	e.Start("localhost:8000") // adding localhost for prevent windows firewall popup
 
 }
 

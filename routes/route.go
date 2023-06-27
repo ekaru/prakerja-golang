@@ -12,5 +12,6 @@ func Routes(e *echo.Echo) *echo.Echo {
 	e.GET("/news/:id", controllers.DetailNewsController)
 	e.POST("/news", controllers.CreateNewsController)
 	e.PUT("/news/:id", controllers.UpdateController)
+	e.DELETE("/news/:id", controllers.DeleteNewsController)
 	return e
 }
