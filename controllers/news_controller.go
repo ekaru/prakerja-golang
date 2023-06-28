@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"sesi6/configs"
 	"sesi6/models"
@@ -22,6 +23,13 @@ func CreateNewsController(c echo.Context) error {
 		})
 	}
 
+	if result.RowsAffected == 0 {
+		return c.JSON(http.StatusOK, models.BaseResponse{
+			Message: "Failed",
+			Data:    news,
+		})
+	}
+
 	return c.JSON(http.StatusOK, models.BaseResponse{
 		Message: "Success",
 		Data:    news,
@@ -30,19 +38,29 @@ func CreateNewsController(c echo.Context) error {
 }
 
 func UpdateController(c echo.Context) error {
-	var news models.News
-	var updatedNews models.News
+	var id, err1 = strconv.Atoi(c.Param("id"))
+	if err1 != nil {
+		return c.JSON(http.StatusBadRequest, models.BaseResponse{
+			Message: "Request Invalid",
+			Data:    nil,
+		})
+	}
+
+	var news, updatedNews models.News
 	c.Bind(&updatedNews)
 
-	var id, _ = strconv.Atoi(c.Param("id"))
-
-	configs.DB.First(&news, id)
+	result := configs.DB.First(&news, id)
+	if result.Error != nil {
+		return c.JSON(http.StatusInternalServerError, models.BaseResponse{
+			Message: "Error",
+			Data:    nil,
+		})
+	}
 
 	news.Title = updatedNews.Title
 	news.Content = updatedNews.Content
 
-	result := configs.DB.Save(&news)
-	if result.Error != nil {
+	if err := configs.DB.Save(&news); err != nil {
 		return c.JSON(http.StatusInternalServerError, models.BaseResponse{
 			Message: "Error",
 			Data:    nil,
@@ -62,6 +80,13 @@ func DetailNewsController(c echo.Context) error {
 	var news models.News
 
 	result := configs.DB.First(&news, id)
+	if result.Error != nil {
+		return c.JSON(http.StatusNotFound, models.BaseResponse{
+			Message: "Not Found",
+			Data:    nil,
+		})
+	}
+	log.Println("rowAffected:", result.RowsAffected)
 
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, models.BaseResponse{
@@ -100,9 +125,18 @@ func DeleteNewsController(c echo.Context) error {
 
 	result := configs.DB.Where("id = ?", id).Delete(&news)
 
+	log.Println("result:", result.RowsAffected)
+
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, models.BaseResponse{
 			Message: "Error",
+			Data:    nil,
+		})
+	}
+
+	if result.RowsAffected == 0 {
+		return c.JSON(http.StatusNotFound, models.BaseResponse{
+			Message: "Not Found",
 			Data:    nil,
 		})
 	}
